@@ -1,0 +1,42 @@
+{
+  "codeSplitting": {
+    "metric": "Code-splitting theo route (React.lazy + Vite)",
+    "totalChunks": 61,
+    "lazyRouteVendorChunks": 60,
+    "totalBundleJsKB": 1602.1,
+    "initialLoadKB_gzip": 97.5,
+    "totalBundleKB_gzip": 505.9,
+    "initialShareOfTotalPct": 19.3,
+    "payloadReductionVsMonolithPct": 80.7,
+    "note": "Nếu gộp 1 bundle, client phải tải toàn bộ ~505.9KB gzip ngay lần đầu; code-splitting chỉ tải ~97.5KB."
+  },
+  "deferredHeavyLibs": {
+    "metric": "Thư viện nặng được tách khỏi initial load",
+    "libs": [
+      {
+        "chunk": "leaflet.js",
+        "rawKB": 149.3,
+        "gzipKB": 43.2
+      },
+      {
+        "chunk": "react-apexcharts.esm.js",
+        "rawKB": 509.1,
+        "gzipKB": 135.5
+      },
+      {
+        "chunk": "xlsx.js",
+        "rawKB": 414.8,
+        "gzipKB": 136.8
+      }
+    ],
+    "totalDeferredKB_gzip": 315.6,
+    "note": "xlsx/apexcharts/leaflet chỉ tải khi mở trang tương ứng (report/dashboard/bản đồ), không nằm trong initial bundle."
+  },
+  "gzipCompression": {
+    "metric": "Nén gzip toàn bộ asset khi truyền qua mạng",
+    "totalRawKB": 1680,
+    "totalGzipKB": 505.9,
+    "compressionRatioX": 3.32,
+    "bytesSavedPct": 69.9
+  }
+}

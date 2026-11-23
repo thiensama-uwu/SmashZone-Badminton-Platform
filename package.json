@@ -1,0 +1,53 @@
+{
+  "name": "project-cnm-backend",
+  "private": true,
+  "workspaces": [
+    "backend/*-service",
+    "backend/api-gateway"
+  ],
+  "scripts": {
+    "install:all": "npm install --workspaces",
+    "prisma:generate": "prisma generate --schema backend/prisma/schema.prisma",
+    "db:push": "prisma db push --schema backend/prisma/schema.prisma --accept-data-loss",
+    "db:seed": "node backend/prisma/seed.js",
+    "db:cleanup:testdata": "node backend/prisma/cleanup-test-data.js",
+    "audit:api": "powershell -ExecutionPolicy Bypass -File backend/scripts/api-access-audit.ps1",
+    "fixtures:ui": "powershell -ExecutionPolicy Bypass -File backend/scripts/populate-ui-fixtures.ps1",
+    "start:gateway": "npm --workspace backend/api-gateway run start",
+    "start:auth": "npm --workspace backend/auth-service run start",
+    "start:user": "npm --workspace backend/user-service run start",
+    "start:court": "npm --workspace backend/court-service run start",
+    "start:booking": "npm --workspace backend/booking-service run start",
+    "start:payment": "npm --workspace backend/payment-service run start",
+    "start:notification": "npm --workspace backend/notification-service run start",
+    "start:report": "npm --workspace backend/report-service run start",
+    "dev:gateway": "npm --workspace backend/api-gateway run dev",
+    "dev:auth": "npm --workspace backend/auth-service run dev",
+    "dev:user": "npm --workspace backend/user-service run dev",
+    "dev:court": "npm --workspace backend/court-service run dev",
+    "dev:booking": "npm --workspace backend/booking-service run dev",
+    "dev:payment": "npm --workspace backend/payment-service run dev",
+    "dev:notification": "npm --workspace backend/notification-service run dev",
+    "dev:report": "npm --workspace backend/report-service run dev",
+    "start:all": "powershell -ExecutionPolicy Bypass -File backend/scripts/start-all.ps1"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.6.0",
+    "amqplib": "^0.10.4",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "debug": "^4.4.0",
+    "express": "^4.21.2",
+    "ioredis": "^5.10.1",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "multer": "^2.0.2",
+    "nodemailer": "^6.10.1",
+    "prom-client": "^15.1.3",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "prisma": "^6.6.0"
+  }
+}

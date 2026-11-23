@@ -1,0 +1,67 @@
+{
+  "doubleBooking": {
+    "metric": "Chống double-booking (Redis distributed lock)",
+    "concurrentRequests": 1000,
+    "grantedLock": 1,
+    "rejected": 999,
+    "blockRatePct": 99.9
+  },
+  "idempotency": {
+    "metric": "Idempotency chống tạo trùng khi retry",
+    "duplicateRequests": 500,
+    "recordsCreated": 1,
+    "duplicatesBlocked": 499,
+    "dedupRatePct": 100
+  },
+  "bcrypt": {
+    "metric": "Bcrypt password hashing (chống brute-force)",
+    "costFactor": 10,
+    "msPerHash": 219.44,
+    "hashesPerSecond": 4.6,
+    "note": "SHA-256 raw ~vài triệu hash/s → bcrypt chậm hơn ~5-6 bậc, làm brute-force offline bất khả thi"
+  },
+  "zod": {
+    "metric": "Zod input validation overhead",
+    "iterations": 100000,
+    "validationsPerSecond": 66685,
+    "microsecondsPerValidation": 15
+  },
+  "rateLimiter": {
+    "metric": "Fixed-window rate limiter (chống brute-force/spam)",
+    "limitPerWindow": 5,
+    "totalRequests": 10000,
+    "allowedThrough": 5,
+    "blocked": 9995,
+    "accuracyPct": 100
+  },
+  "rateLimiterThroughput": {
+    "metric": "Rate limiter throughput (Redis Lua fixed-window)",
+    "iterations": 50000,
+    "opsPerSecond": 35753,
+    "msPerOp": 0.028
+  },
+  "cache": {
+    "metric": "Cache lịch trống (cache hit vs build lại payload)",
+    "requests": 20000,
+    "coldMsPerReq": 0.016,
+    "warmMsPerReq": 0,
+    "latencyReductionPct": 99.8,
+    "speedupX": 455,
+    "note": "Phần 'cold' mô phỏng chi phí build+serialize payload phía server (đại diện, không tính round-trip DB thật)"
+  },
+  "jwt": {
+    "metric": "JWT verify (xác thực stateless, không chạm DB)",
+    "iterations": 5000,
+    "verificationsPerSecond": 658,
+    "msPerVerify": 1.5187
+  },
+  "gatewayPipeline": {
+    "metric": "Gateway pipeline (rate-limit + JWT verify + RBAC) — in-process",
+    "iterations": 5000,
+    "requestsPerSecond": 1027,
+    "p50Ms": 0.6376,
+    "p95Ms": 1.8419,
+    "p99Ms": 2.9863,
+    "note": "Đo chi phí CPU của pipeline bảo mật, không gồm network/proxy tới downstream service"
+  }
+}

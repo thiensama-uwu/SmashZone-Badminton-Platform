@@ -1,0 +1,144 @@
+name: project-cnm
+
+services:
+  # -----------------------------------------------
+  # 1. CORE INFRASTRUCTURE
+  # -----------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: project_cnm
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d project_cnm"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+  # -----------------------------------------------
+  # 2. DATABASE MIGRATION & SEED RUNNER
+  # -----------------------------------------------
+  db-setup:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    command: >
+      sh -c "npm run db:push && npm run db:seed"
+    env_file: ../.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # -----------------------------------------------
+  # 3. API GATEWAY (FRONTEND ENTRYPOINT)
+  # -----------------------------------------------
+  api-gateway:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    command: npm run start:gateway
+    ports:
+      - "3000:3000"
+    env_file: ../.env
+    volumes:
+      - uploads_data:/app/backend/api-gateway/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  # -----------------------------------------------
+  # 4. MICROSERVICES
+  # -----------------------------------------------
+  auth-service:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    command: npm run start:auth
+    env_file: ../.env
+    depends_on: &backend_depends
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  user-service:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    command: npm run start:user
+    env_file: ../.env
+    depends_on: *backend_depends
+    
+  court-service:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    command: npm run start:court
+    env_file: ../.env
+    depends_on: *backend_depends
+
+  booking-service:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    command: npm run start:booking
+    env_file: ../.env
+    depends_on: *backend_depends
+
+  payment-service:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    command: npm run start:payment
+    env_file: ../.env
+    depends_on: *backend_depends
+
+  notification-service:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    command: npm run start:notification
+    env_file: ../.env
+    depends_on: *backend_depends
+
+  report-service:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    command: npm run start:report
+    env_file: ../.env
+    depends_on: *backend_depends
+
+volumes:
+  postgres_data:
+  uploads_data:
+  redis_data:
+  rabbitmq_data:

@@ -1,0 +1,229 @@
+name: project-cnm
+
+x-app-build: &app-build
+  context: ..
+  dockerfile: infra/Dockerfile
+
+x-backend-depends: &backend-depends
+  postgres:
+    condition: service_healthy
+  rabbitmq:
+    condition: service_healthy
+
+x-dev-volumes: &dev-volumes
+  - ../backend/api-gateway/app.js:/app/backend/api-gateway/app.js
+  - ../backend/api-gateway/bin:/app/backend/api-gateway/bin
+  - ../backend/api-gateway/src:/app/backend/api-gateway/src
+  - ../backend/auth-service/app.js:/app/backend/auth-service/app.js
+  - ../backend/auth-service/bin:/app/backend/auth-service/bin
+  - ../backend/auth-service/src:/app/backend/auth-service/src
+  - ../backend/booking-service/app.js:/app/backend/booking-service/app.js
+  - ../backend/booking-service/bin:/app/backend/booking-service/bin
+  - ../backend/booking-service/src:/app/backend/booking-service/src
+  - ../backend/court-service/app.js:/app/backend/court-service/app.js
+  - ../backend/court-service/bin:/app/backend/court-service/bin
+  - ../backend/court-service/src:/app/backend/court-service/src
+  - ../backend/notification-service/app.js:/app/backend/notification-service/app.js
+  - ../backend/notification-service/bin:/app/backend/notification-service/bin
+  - ../backend/notification-service/src:/app/backend/notification-service/src
+  - ../backend/payment-service/app.js:/app/backend/payment-service/app.js
+  - ../backend/payment-service/bin:/app/backend/payment-service/bin
+  - ../backend/payment-service/src:/app/backend/payment-service/src
+  - ../backend/report-service/app.js:/app/backend/report-service/app.js
+  - ../backend/report-service/bin:/app/backend/report-service/bin
+  - ../backend/report-service/src:/app/backend/report-service/src
+  - ../backend/user-service/app.js:/app/backend/user-service/app.js
+  - ../backend/user-service/bin:/app/backend/user-service/bin
+  - ../backend/user-service/src:/app/backend/user-service/src
+  - ../backend/docs:/app/backend/docs
+  - ../backend/shared/constants:/app/backend/shared/constants
+  - ../backend/shared/data:/app/backend/shared/data
+  - ../backend/shared/events:/app/backend/shared/events
+  - ../backend/shared/http:/app/backend/shared/http
+  - ../backend/shared/lib:/app/backend/shared/lib
+  - ../backend/shared/middleware:/app/backend/shared/middleware
+  - ../backend/shared/utils:/app/backend/shared/utils
+  - uploads_data_dev:/app/backend/api-gateway/uploads
+
+x-node-dev-limits: &node-dev-limits
+  cpus: "0.35"
+  mem_limit: 256m
+  memswap_limit: 256m
+
+x-backend-service: &backend-service
+  build: *app-build
+  env_file: ../.env
+  environment:
+    NODE_ENV: development
+    NODE_OPTIONS: --max-old-space-size=128
+  volumes: *dev-volumes
+  depends_on: *backend-depends
+  <<: *node-dev-limits
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    cpus: "0.75"
+    mem_limit: 768m
+    memswap_limit: 768m
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: project_cnm
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d project_cnm"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    cpus: "0.50"
+    mem_limit: 512m
+    memswap_limit: 512m
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data_dev:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    cpus: "0.25"
+    mem_limit: 128m
+    memswap_limit: 128m
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_dev:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  db-setup:
+    build: *app-build
+    command: sh -c "npm run db:push && npm run db:seed"
+    env_file: ../.env
+    environment:
+      NODE_OPTIONS: --max-old-space-size=256
+    cpus: "0.50"
+    mem_limit: 512m
+    memswap_limit: 512m
+    volumes:
+      - ../backend/prisma:/app/backend/prisma
+      - ../backend/shared/utils:/app/backend/shared/utils
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    profiles:
+      - setup
+
+  api-gateway:
+    <<: *backend-service
+    command: npm run dev:gateway
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  auth-service:
+    <<: *backend-service
+    command: npm run dev:auth
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  user-service:
+    <<: *backend-service
+    command: npm run dev:user
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  court-service:
+    <<: *backend-service
+    command: npm run dev:court
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  booking-service:
+    <<: *backend-service
+    command: npm run dev:booking
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  payment-service:
+    <<: *backend-service
+    command: npm run dev:payment
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  notification-service:
+    <<: *backend-service
+    command: npm run dev:notification
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  report-service:
+    <<: *backend-service
+    command: npm run dev:report
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data_dev:
+  uploads_data_dev:
+  redis_data_dev:
+  rabbitmq_data_dev:

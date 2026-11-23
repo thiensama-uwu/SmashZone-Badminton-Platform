@@ -1,0 +1,423 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../shared/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["auth", "user", "court", "booking", "payment", "notification"]
+}
+
+model Role {
+  id        String     @id @default(cuid())
+  code      String     @unique
+  name      String
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  users     UserRole[]
+
+  @@map("roles")
+  @@schema("auth")
+}
+
+model AuthUser {
+  id              String             @id @default(cuid())
+  email           String             @unique
+  passwordHash    String?            @map("password_hash")
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+  refreshSessions RefreshSession[]
+  userRoles       UserRole[]
+  otps            PasswordResetOtp[]
+  profile         UserProfile?
+
+  @@map("auth_users")
+  @@schema("auth")
+}
+
+model UserRole {
+  userId    String   @map("user_id")
+  roleId    String   @map("role_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user      AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+  @@schema("auth")
+}
+
+model RefreshSession {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  token     String    @unique
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  user      AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_sessions")
+  @@schema("auth")
+}
+
+model PasswordResetOtp {
+  id         String    @id @default(cuid())
+  userId     String    @map("user_id")
+  code       String
+  expiresAt  DateTime  @map("expires_at")
+  consumedAt DateTime? @map("consumed_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  user       AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_otps")
+  @@schema("auth")
+}
+
+model UserProfile {
+  id        String            @id @default(cuid())
+  userId    String            @unique @map("user_id")
+  email     String
+  fullName  String            @map("full_name")
+  phone     String?           @unique
+  gender    String?
+  birthDate DateTime?         @map("birth_date")
+  avatarUrl String?           @map("avatar_url")
+  version   Int               @default(1)
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt @map("updated_at")
+  auditLogs ProfileAuditLog[]
+  authUser  AuthUser?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+  @@schema("user")
+}
+
+model ProfileAuditLog {
+  id        String      @id @default(cuid())
+  profileId String      @map("profile_id")
+  action    String
+  changedBy String?     @map("changed_by")
+  payload   Json?
+  createdAt DateTime    @default(now()) @map("created_at")
+  profile   UserProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("profile_audit_logs")
+  @@schema("user")
+}
+
+model Court {
+  id             String              @id @default(cuid())
+  branchId       String              @map("branch_id")
+  name           String
+  slug           String              @unique
+  surface        String
+  status         String              @default("ACTIVE")
+  description    String?
+  imageUrl       String?             @map("image_url")
+  address        String?
+  latitude       Float?
+  longitude      Float?
+  deletedAt      DateTime?           @map("deleted_at")
+  deletedBy      String?             @map("deleted_by")
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+  slotTemplates  CourtSlotTemplate[]
+  priceSchedules PriceSchedule[]
+  policy         Policy?
+
+  @@index([status])
+  @@index([slug])
+  @@map("courts")
+  @@schema("court")
+}
+
+model CourtSlotTemplate {
+  id        String   @id @default(cuid())
+  courtId   String   @map("court_id")
+  startTime String   @map("start_time")
+  endTime   String   @map("end_time")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  court     Court    @relation(fields: [courtId], references: [id], onDelete: Cascade)
+
+  @@map("court_slot_templates")
+  @@schema("court")
+}
+
+model PriceSchedule {
+  id        String   @id @default(cuid())
+  courtId   String   @map("court_id")
+  type      String
+  priority  Int
+  price     Int
+  startTime String?  @map("start_time")
+  endTime   String?  @map("end_time")
+  dates     String[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  court     Court    @relation(fields: [courtId], references: [id], onDelete: Cascade)
+
+  @@map("price_schedules")
+  @@schema("court")
+}
+
+model Policy {
+  id                    String   @id @default(cuid())
+  courtId               String   @unique @map("court_id")
+  depositPercent        Int      @default(50) @map("deposit_percent")
+  refundBeforeHours     Int      @default(24) @map("refund_before_hours")
+  refundPercent         Int      @default(100) @map("refund_percent")
+  rescheduleBeforeHours Int      @default(6) @map("reschedule_before_hours")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+  court                 Court    @relation(fields: [courtId], references: [id], onDelete: Cascade)
+
+  @@map("policies")
+  @@schema("court")
+}
+
+model CourtOutboxEvent {
+  id            String    @id @default(cuid())
+  eventId       String    @unique @map("event_id")
+  eventType     String    @map("event_type")
+  aggregateId   String    @map("aggregate_id")
+  schemaVersion String    @map("schema_version")
+  correlationId String?   @map("correlation_id")
+  payload       Json
+  publishedAt   DateTime? @map("published_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@index([publishedAt, createdAt])
+  @@map("outbox_events")
+  @@schema("court")
+}
+
+model Booking {
+  id                String            @id @default(cuid())
+  bookingCode       String            @unique @map("booking_code")
+  userId            String?           @map("user_id")
+  courtId           String            @map("court_id")
+  date              String
+  startTime         String            @map("start_time")
+  endTime           String            @map("end_time")
+  status            String
+  origin            String
+  createdBy         String            @map("created_by")
+  cancelledBy       String?           @map("cancelled_by")
+  cancelReason      String?           @map("cancel_reason")
+  totalAmount       Int               @map("total_amount")
+  pricingSnapshot   Json              @map("pricing_snapshot")
+  policySnapshot    Json              @map("policy_snapshot")
+  paymentScenario   Json?             @map("payment_scenario")
+  rescheduleContext Json?             @map("reschedule_context")
+  holdExpiredAt     DateTime?         @map("hold_expired_at")
+  version           Int               @default(1)
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+  histories         BookingHistory[]
+  reservations      SlotReservation[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([date, status])
+  @@index([status, holdExpiredAt])
+  @@map("bookings")
+  @@schema("booking")
+}
+
+model BookingHistory {
+  id        String   @id @default(cuid())
+  bookingId String   @map("booking_id")
+  userId    String?  @map("user_id")
+  action    String
+  status    String
+  payload   Json?
+  createdAt DateTime @default(now()) @map("created_at")
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("booking_histories")
+  @@schema("booking")
+}
+
+model SlotReservation {
+  id            String    @id @default(cuid())
+  bookingId     String    @map("booking_id")
+  courtId       String    @map("court_id")
+  date          String
+  startTime     String    @map("start_time")
+  endTime       String    @map("end_time")
+  status        String
+  holdExpiredAt DateTime? @map("hold_expired_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  booking       Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([courtId, date, startTime, endTime])
+  @@index([status])
+  @@map("slot_reservations")
+  @@schema("booking")
+}
+
+model BookingOutboxEvent {
+  id            String    @id @default(cuid())
+  eventId       String    @unique @map("event_id")
+  eventType     String    @map("event_type")
+  aggregateId   String    @map("aggregate_id")
+  schemaVersion String    @map("schema_version")
+  correlationId String?   @map("correlation_id")
+  payload       Json
+  publishedAt   DateTime? @map("published_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@index([publishedAt, createdAt])
+  @@map("outbox_events")
+  @@schema("booking")
+}
+
+model Payment {
+  id                    String               @id @default(cuid())
+  bookingId             String               @map("booking_id")
+  userId                String               @map("user_id")
+  amount                Int
+  type                  String
+  status                String
+  providerReference     String               @map("provider_reference")
+  providerStatus        String               @map("provider_status")
+  providerTransactionId String?              @unique @map("provider_transaction_id")
+  expiresAt             DateTime             @map("expires_at")
+  createdAt             DateTime             @default(now()) @map("created_at")
+  updatedAt             DateTime             @updatedAt @map("updated_at")
+  refunds               Refund[]
+  transactions          PaymentTransaction[]
+
+  @@index([bookingId, type])
+  @@map("payments")
+  @@schema("payment")
+}
+
+model Refund {
+  id                     String    @id @default(cuid())
+  paymentId              String    @map("payment_id")
+  bookingId              String    @map("booking_id")
+  amount                 Int
+  reason                 String
+  status                 String    @default("PENDING")
+  refundReference        String?   @unique @map("refund_reference")
+  refundBankName         String?   @map("refund_bank_name")
+  refundAccountNumber    String?   @map("refund_account_number")
+  refundAccountName      String?   @map("refund_account_name")
+  providerTransactionId  String?   @unique @map("provider_transaction_id")
+  manualTransferMarkedAt DateTime? @map("manual_transfer_marked_at")
+  manualTransferMarkedBy String?   @map("manual_transfer_marked_by")
+  completedAt            DateTime? @map("completed_at")
+  completedBy            String?   @map("completed_by")
+  completedVia           String?   @map("completed_via")
+  manualProofNote        String?   @map("manual_proof_note")
+  failureReason          String?   @map("failure_reason")
+  lastMismatchReason     String?   @map("last_mismatch_reason")
+  matchWindowExpiresAt   DateTime? @map("match_window_expires_at")
+  createdAt              DateTime  @default(now()) @map("created_at")
+  payment                Payment   @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@index([bookingId, status])
+  @@map("refunds")
+  @@schema("payment")
+}
+
+model PaymentTransaction {
+  id                    String   @id @default(cuid())
+  paymentId             String   @map("payment_id")
+  providerTransactionId String   @unique @map("provider_transaction_id")
+  status                String
+  payload               Json?
+  createdAt             DateTime @default(now()) @map("created_at")
+  payment               Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@map("payment_transactions")
+  @@schema("payment")
+}
+
+model PaymentOutboxEvent {
+  id            String    @id @default(cuid())
+  eventId       String    @unique @map("event_id")
+  eventType     String    @map("event_type")
+  aggregateId   String    @map("aggregate_id")
+  schemaVersion String    @map("schema_version")
+  correlationId String?   @map("correlation_id")
+  payload       Json
+  publishedAt   DateTime? @map("published_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@index([publishedAt, createdAt])
+  @@map("outbox_events")
+  @@schema("payment")
+}
+
+model PaymentWebhookLog {
+  id                    String   @id @default(cuid())
+  provider              String
+  providerTransactionId String?  @map("provider_transaction_id")
+  referenceCode         String?  @map("reference_code")
+  transferType          String?  @map("transfer_type")
+  transferAmount        Int?     @map("transfer_amount")
+  content               String?
+  matchedType           String   @map("matched_type")
+  matchedPaymentId      String?  @map("matched_payment_id")
+  matchedRefundId       String?  @map("matched_refund_id")
+  result                String
+  rawPayload            Json     @map("raw_payload")
+  createdAt             DateTime @default(now()) @map("created_at")
+
+  @@index([providerTransactionId])
+  @@index([matchedType, result, createdAt])
+  @@map("webhook_logs")
+  @@schema("payment")
+}
+
+model Notification {
+  id            String            @id @default(cuid())
+  userId        String            @map("user_id")
+  eventType     String            @map("event_type")
+  aggregateId   String            @map("aggregate_id")
+  channel       String
+  message       String
+  payload       Json?
+  readAt        DateTime?         @map("read_at")
+  dedupKey      String            @unique @map("dedup_key")
+  correlationId String?           @map("correlation_id")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+  attempts      DeliveryAttempt[]
+
+  @@index([userId, createdAt])
+  @@map("notifications")
+  @@schema("notification")
+}
+
+model PushSubscription {
+  id         String   @id @default(cuid())
+  userId     String   @unique @map("user_id")
+  endpoint   String
+  publicKey  String   @map("public_key")
+  authSecret String   @map("auth_secret")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("push_subscriptions")
+  @@schema("notification")
+}
+
+model DeliveryAttempt {
+  id             String       @id @default(cuid())
+  notificationId String       @map("notification_id")
+  attempt        Int
+  status         String
+  nextRetryAt    DateTime?    @map("next_retry_at")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@map("delivery_attempts")
+  @@schema("notification")
+}

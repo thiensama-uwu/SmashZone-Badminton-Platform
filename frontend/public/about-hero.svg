@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgAbout" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="50%" stop-color="#fff5f6" />
+      <stop offset="100%" stop-color="#ffeef1" />
+    </linearGradient>
+
+    <linearGradient id="courtGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff385c" />
+      <stop offset="100%" stop-color="#d90b38" />
+    </linearGradient>
+
+    <linearGradient id="accentCard" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#fafafa" />
+    </linearGradient>
+
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="125%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.08" />
+    </filter>
+
+    <filter id="cardShadow" x="-15%" y="-15%" width="130%" height="135%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#ff385c" flood-opacity="0.12" />
+    </filter>
+  </defs>
+
+  <!-- Clean Canvas Background -->
+  <rect width="800" height="600" rx="24" fill="url(#bgAbout)" />
+
+  <!-- Ambient Light Orbs -->
+  <circle cx="150" cy="120" r="140" fill="#ff385c" fill-opacity="0.05" filter="blur(40px)" />
+  <circle cx="680" cy="480" r="160" fill="#ff385c" fill-opacity="0.06" filter="blur(50px)" />
+
+  <!-- Isometric / Perspective Badminton Court -->
+  <g transform="translate(100, 60)" filter="url(#softShadow)">
+    <!-- Base Court Slab -->
+    <path d="M 300 80 L 560 220 L 280 440 L 20 300 Z" fill="#222222" />
+    <!-- Inner Court Surface (Premium Emerald/Graphite or Rausch contrast) -->
+    <path d="M 300 90 L 545 222 L 280 430 L 35 298 Z" fill="url(#courtGrad)" />
+
+    <!-- Court Line Markings (White Perspective) -->
+    <!-- Outer boundary lines -->
+    <path d="M 300 110 L 525 228 L 280 415 L 55 297 Z" fill="none" stroke="#ffffff" stroke-width="3" stroke-opacity="0.9" />
+    
+    <!-- Singles sidelines -->
+    <path d="M 285 125 L 495 235 L 275 398 L 75 292 Z" fill="none" stroke="#ffffff" stroke-width="2" stroke-opacity="0.6" />
+
+    <!-- Center service line -->
+    <path d="M 292 210 L 280 320" stroke="#ffffff" stroke-width="2.5" stroke-opacity="0.8" />
+    
+    <!-- Net Posts and Net -->
+    <!-- Left Post -->
+    <line x1="168" y1="190" x2="168" y2="135" stroke="#ffffff" stroke-width="4" stroke-linecap="round" />
+    <!-- Right Post -->
+    <line x1="412" y1="325" x2="412" y2="270" stroke="#ffffff" stroke-width="4" stroke-linecap="round" />
+    <!-- Net Top Cord -->
+    <line x1="168" y1="145" x2="412" y2="280" stroke="#ffffff" stroke-width="3" />
+    <!-- Net Mesh Graphic -->
+    <path d="M 168 145 L 412 280 L 412 305 L 168 170 Z" fill="#ffffff" fill-opacity="0.25" />
+    <line x1="168" y1="170" x2="412" y2="305" stroke="#ffffff" stroke-width="1.5" stroke-opacity="0.7" />
+
+    <!-- Motion Swoosh Arc -->
+    <path d="M 120 340 Q 240 100 440 170" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-dasharray="10 8" stroke-opacity="0.8" />
+
+    <!-- Dynamic Shuttlecock in Air -->
+    <g transform="translate(370, 150) rotate(35) scale(0.9)">
+      <path d="M -15 -25 L 15 -25 L 9 5 L -9 5 Z" fill="#ffffff" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.2))" />
+      <line x1="-5" y1="-25" x2="-3" y2="5" stroke="#ff385c" stroke-width="1.5" />
+      <line x1="5" y1="-25" x2="3" y2="5" stroke="#ff385c" stroke-width="1.5" />
+      <rect x="-8" y="-5" width="16" height="3" rx="1.5" fill="#ff385c" />
+      <ellipse cx="0" cy="11" rx="9" ry="6" fill="#ffffff" />
+    </g>
+  </g>
+
+  <!-- Interactive Floating Widget 1: Realtime Booking Success -->
+  <g transform="translate(60, 390)" filter="url(#cardShadow)">
+    <rect width="240" height="90" rx="18" fill="url(#accentCard)" stroke="#f1f1f1" stroke-width="1.5" />
+    <!-- Green/Primary Check Badge -->
+    <circle cx="45" cy="45" r="22" fill="#ff385c" />
+    <path d="M 37 45 L 43 51 L 54 39" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    <!-- Text Info -->
+    <text x="80" y="38" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="700" fill="#222222">Khung giờ đã sẵn sàng</text>
+    <text x="80" y="58" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="500" fill="#717171">18:00 - 19:30 · Sân Quân Khu 5</text>
+    <text x="80" y="74" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" fill="#ff385c">Đã xác nhận tức thì</text>
+  </g>
+
+  <!-- Interactive Floating Widget 2: Live QuickPay / Verified -->
+  <g transform="translate(510, 80)" filter="url(#cardShadow)">
+    <rect width="230" height="85" rx="18" fill="url(#accentCard)" stroke="#f1f1f1" stroke-width="1.5" />
+    <circle cx="42" cy="42" r="20" fill="#fff1f3" />
+    <!-- Lightning Fast Icon -->
+    <path d="M 44 28 L 34 43 L 42 43 L 40 56 L 50 40 L 42 40 Z" fill="#ff385c" />
+    <text x="75" y="36" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700" fill="#222222">QuickPay QR Code</text>
+    <text x="75" y="55" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="500" fill="#717171">Đối soát vé 0 giây</text>
+    <text x="75" y="71" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" fill="#008a05">● Hệ thống online 24/7</text>
+  </g>
+
+  <!-- Interactive Floating Widget 3: Đà Nẵng Badminton Network -->
+  <g transform="translate(530, 460)" filter="url(#softShadow)">
+    <rect width="210" height="75" rx="16" fill="#222222" />
+    <!-- Location Pin -->
+    <circle cx="36" cy="37" r="16" fill="#ff385c" />
+    <path d="M 36 28 C 32 28 29 31 29 35 C 29 41 36 47 36 47 C 36 47 43 41 43 35 C 43 31 40 28 36 28 Z" fill="#ffffff" />
+    <circle cx="36" cy="34" r="2.5" fill="#ff385c" />
+    <text x="64" y="33" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700" fill="#ffffff">Mạng lưới Đà Nẵng</text>
+    <text x="64" y="52" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="500" fill="#dddddd">Hải Châu · Sơn Trà · Cẩm Lệ</text>
+  </g>
+</svg>
